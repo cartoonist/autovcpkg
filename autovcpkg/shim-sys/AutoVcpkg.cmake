@@ -112,6 +112,15 @@ function (vcpkg_configure AUTO_VCPKG_BOOTSTRAP_SKIP)
             "${AUTO_VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
 endfunction ()
 
+function(vcpkg_lazy_configure)
+    vcpkg_setroot()
+    if (NOT EXISTS "${AUTO_VCPKG_ROOT}/vcpkg" OR NOT EXISTS "${AUTO_VCPKG_ROOT}/.vcpkg-root")
+        vcpkg_configure(off)
+    else ()
+        vcpkg_configure(on) # skip bootstrap
+    endif ()
+endfunction()
+
 function (vcpkg_install)
     cmake_parse_arguments(_vcpkg_install "" "TRIPLET" "" ${ARGN})
     if (NOT ARGN)
@@ -136,12 +145,7 @@ function (vcpkg_install)
     string(TOLOWER "${AUTO_VCPKG_GIT_TAG}:${packages}" packages_cache)
     message(STATUS "AutoVcpkg: vcpkg packages: ${packages}")
 
-    vcpkg_setroot()
-    if (NOT EXISTS "${AUTO_VCPKG_ROOT}/vcpkg" OR NOT EXISTS "${AUTO_VCPKG_ROOT}/.vcpkg-root")
-        vcpkg_configure(off)
-    else ()
-        vcpkg_configure(on) # skip bootstrap
-    endif ()
+    vcpkg_lazy_configure()
 
     message(STATUS "AutoVcpkg: vcpkg_install() called to install: ${join}")
     execute_process (COMMAND "${AUTO_VCPKG_EXECUTABLE}" "install" ${packages})
